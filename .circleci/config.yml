@@ -1,0 +1,97 @@
+version: 2
+jobs:
+  push_images:
+    docker:
+      - image: circleci/openjdk:8-jdk-node
+    steps:
+      - setup_remote_docker
+      - run:
+          name: Berlioz Setup
+          command: curl -sL https://raw.githubusercontent.com/berlioz-the/berlioz/master/support/setup | sudo -E bash -
+      - checkout
+      - run: 
+          name: Project File Structure
+          command: ls -la
+      - run: 
+          name: Berlioz Setup Workspace
+          command: mkdir -p berlioz_workspace
+      - run: 
+          name: Output Service Definitions
+          command: sudo berlioz output-definitions
+      - run: 
+          name: Berlioz Login
+          command: berlioz login --user $BERLIOZ_USER --pass $BERLIOZ_PASS
+      - run: 
+          name: Berlioz Build and Push Images
+          command: sudo -E bash -c 'berlioz push --version-metadata-path berlioz_workspace/version-metadata'
+      - run: 
+          name: Copy Version Metadata
+          command: cat berlioz_workspace/version-metadata
+      - persist_to_workspace:
+          root: .
+          paths:
+              - berlioz_workspace
+
+  test_in_cloud:
+    docker:
+      - image: berliozcloud/circleci-cli
+    steps:
+      - attach_workspace:
+          at: .
+      - run: 
+          name: View Version Metadata
+          command: cat berlioz_workspace/version-metadata
+      - run: 
+          name: Berlioz Login
+          command: berlioz login --user $BERLIOZ_USER --pass $BERLIOZ_PASS
+      - run: 
+          name: Berlioz Deploy
+          command: berlioz run --deployment test --cluster fundme --region us-east-1 --version-metadata-path berlioz_workspace/version-metadata --wait --timeout 900
+      - run: 
+          name: Test Endpoint
+          command: |
+            url=$(berlioz endpoint --deployment test --cluster fundme --region us-east-1 --endpoint frontend)
+            echo "Service Url: $url"
+            curl -s -S $url 2>&1
+      - run: 
+          name: Sleep Before Teardown
+          command: sleep 60
+      - run: 
+          name: Berlioz Trigger Stop
+          command: berlioz stop --deployment test --cluster fundme --region us-east-1
+
+  deploy_to_production:
+    docker:
+      - image: berliozcloud/circleci-cli
+    steps:
+      - attach_workspace:
+          at: .
+      - run: 
+          name: View Version Metadata
+          command: cat berlioz_workspace/version-metadata
+      - run: 
+          name: Berlioz Login
+          command: berlioz login --user $BERLIOZ_USER --pass $BERLIOZ_PASS
+      - run: 
+          name: Berlioz Deploy
+          command: berlioz run --deployment prod --cluster fundme --region us-east-1 --version-metadata-path berlioz_workspace/version-metadata --wait --timeout 900
+      - run: 
+          name: Test Endpoint
+          command: |
+            url=$(berlioz endpoint --deployment prod --cluster fundme --region us-east-1 --endpoint frontend)
+            echo "Service Url: $url"
+            curl -s -S $url 2>&1
+
+workflows:
+  version: 2
+  deliver:
+    jobs:
+      - push_images
+      - test_in_cloud:
+          requires:
+            - push_images
+      - deploy_to_production:
+          requires:
+            - push_images
+            - test_in_cloud
+      
