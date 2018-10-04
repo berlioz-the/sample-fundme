@@ -1,6 +1,12 @@
 .container {
 }
 
+.amount {
+    font-size: 24pt;
+    font-weight: 800;
+    text-align: center;
+}
+
 .card {
     margin-top: 15px;
     margin-bottom: 15px;
