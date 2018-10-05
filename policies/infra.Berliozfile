@@ -1,7 +1,7 @@
 - kind: policy
   name: instance-type
   deployment: prod
-  value: t3.small
+  value: t2.micro
 
 - kind: policy
   name: instance-type
