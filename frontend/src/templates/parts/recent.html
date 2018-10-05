@@ -3,12 +3,12 @@
         Recent Donations
     </div>
     <div class="card-body">
-        <table class="table">
+        <table class="table table-striped">
             <tbody>
                 {% if recent %}
                     {% for x in recent['entries'] %}
                         <tr>
-                            <th scope="row">{{ x.date }}</th>
+                            <th scope="row">{{ x.date.replace('T', ' ').replace('Z', '') }}</th>
                             <td>${{ x.amount }}</td>
                         </tr>
                     {% endfor %}
