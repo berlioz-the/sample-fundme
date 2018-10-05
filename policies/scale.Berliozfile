@@ -3,7 +3,7 @@
   deployment: local
   service: frontend
   config:
-    desired: 4
+    desired: 1
 
 - kind: policy
   name: scale

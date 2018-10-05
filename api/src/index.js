@@ -2,7 +2,6 @@ const express = require('express')
 const _ = require('lodash')
 const Promise = require('promise')
 const berlioz = require('berlioz-connector');
-const RedisClustr = require('redis-clustr');
 const AWS = require('aws-sdk');
 const uuid = require('uuid/v4');
 
@@ -12,18 +11,7 @@ app.use(express.static('public'))
 app.set('view engine', 'ejs');
 
 
-var redisClient = null;
-berlioz.service("redis").monitorAll(peers => {
-    var servers = [];
-    if (peers) {
-        servers = _.values(peers).map(x => ({ host: x.address, port: x.port }));
-    }
-    console.log("REDIS SERVERS: " + JSON.stringify(servers));
-    redisClient = new RedisClustr({
-        servers: servers
-    });
-})
-
+var redis = require('./redis');
 
 app.get('/', function (req, response) {
     response.json({})
@@ -57,7 +45,7 @@ app.post('/donate', function (req, response) {
         .then(() => getAmount())
         .then(result => {
             var newVal = result + amount;
-            redisClient.set('amount', newVal);
+            redis.client.set('amount', newVal);
         })
         .then(result => {
             response.json({ value: result });
@@ -85,7 +73,7 @@ app.get('/entries', function (req, response) {
 function getAmount()
 {
     return new Promise((resolve, reject) => {
-        redisClient.get('amount', (err, reply) => {
+        redis.client.get('amount', (err, reply) => {
             if (err) {
                 console.log(err)
                 reject(error)
