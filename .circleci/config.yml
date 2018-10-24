@@ -20,10 +20,10 @@ jobs:
           command: sudo berlioz output-definitions
       - run: 
           name: Berlioz Login
-          command: berlioz login --user $BERLIOZ_USER --pass $BERLIOZ_PASS
+          command: berlioz login --user $BERLIOZ_USER --pass $BERLIOZ_PASS --region us-east-1
       - run: 
           name: Berlioz Build and Push Images
-          command: sudo -E bash -c 'berlioz push --version-metadata-path berlioz_workspace/version-metadata'
+          command: sudo -E bash -c 'berlioz push --region us-east-1 --version-metadata-path berlioz_workspace/version-metadata'
       - run: 
           name: Copy Version Metadata
           command: cat berlioz_workspace/version-metadata
@@ -43,7 +43,7 @@ jobs:
           command: cat berlioz_workspace/version-metadata
       - run: 
           name: Berlioz Login
-          command: berlioz login --user $BERLIOZ_USER --pass $BERLIOZ_PASS
+          command: berlioz login --user $BERLIOZ_USER --pass $BERLIOZ_PASS --region us-east-1
       - run: 
           name: Berlioz Deploy
           command: berlioz run --deployment test --cluster fundme --region us-east-1 --version-metadata-path berlioz_workspace/version-metadata --wait --timeout 900
@@ -71,7 +71,7 @@ jobs:
           command: cat berlioz_workspace/version-metadata
       - run: 
           name: Berlioz Login
-          command: berlioz login --user $BERLIOZ_USER --pass $BERLIOZ_PASS
+          command: berlioz login --user $BERLIOZ_USER --pass $BERLIOZ_PASS --region us-east-1
       - run: 
           name: Berlioz Deploy
           command: berlioz run --deployment prod --cluster fundme --region us-east-1 --version-metadata-path berlioz_workspace/version-metadata --wait --timeout 900
