@@ -45,7 +45,7 @@ app.post('/donate', function (req, response) {
         .then(() => getAmount())
         .then(result => {
             var newVal = result + amount;
-            redis.client.set('amount', newVal);
+            redis.set('amount', newVal);
         })
         .then(result => {
             response.json({ value: result });
@@ -73,7 +73,7 @@ app.get('/entries', function (req, response) {
 function getAmount()
 {
     return new Promise((resolve, reject) => {
-        redis.client.get('amount', (err, reply) => {
+        redis.get('amount', (err, reply) => {
             if (err) {
                 console.log(err)
                 reject(error)

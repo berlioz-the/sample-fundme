@@ -5,7 +5,55 @@ const RedisClustr = require('redis-clustr');
 const Redis = require('redis');
 
 var info = {
-    client: null
+    client: null,
+    servers: [],
+    peerInfos: {},
+    get: function(name, cb) {
+        client = getClient();
+        try
+        {
+            client.get(name, cb);
+        }
+        catch(ex)
+        {
+            info.client = null;
+            throw ex;
+        }
+    },
+    set: function(name, newValue) {
+        client = getClient();
+        try
+        {
+            client.set(name, newValue);
+        }
+        catch(ex)
+        {
+            info.client = null;
+            throw ex;
+        }
+    }
+}
+
+function getClient() 
+{
+    if (info.client) {
+        return info.client;
+    }
+
+    if (info.servers.length == 0) {
+        throw new Error('Redis client not available');
+    }
+
+    info.client = new RedisClustr({
+        servers: info.servers,
+        createClient: (port, host, options) => {
+            var peer = info.peerInfos[host + ':' + port];
+            console.log(peer);
+            return getRedisClient(peer, options);
+        }
+    });
+
+    return info.client;
 }
 
 berlioz.service("redis").monitorAll(peers => {
@@ -23,14 +71,8 @@ berlioz.service("redis").monitorAll(peers => {
         info.client.quit();
     }
     console.log("REDIS SERVERS: " + JSON.stringify(servers));
-    info.client = new RedisClustr({
-        servers: servers,
-        createClient: (port, host, options) => {
-            var peer = peerInfos[host + ':' + port];
-            console.log(peer);
-            return getRedisClient(peer, options);
-        }
-    });
+    info.servers = servers;
+    info.peerInfos = peerInfos;
 })
 
 function getRedisClient(peer, options)
